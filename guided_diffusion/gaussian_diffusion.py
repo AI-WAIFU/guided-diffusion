@@ -622,6 +622,53 @@ class GaussianDiffusion:
 
         return {"sample": mean_pred, "pred_xstart": out["pred_xstart"]}
 
+    def ddim_unsample_loop(
+        self,
+        model,
+        shape,
+        image,
+        clip_denoised=True,
+        denoised_fn=None,
+        model_kwargs=None,
+        device=None,
+        progress=False,
+        eta=0.0,
+    ):
+        """
+        Generate noise samples from images and the model by inverting DDIM.
+        """
+        if device is None:
+            device = next(model.parameters()).device
+        assert isinstance(shape, (tuple, list))
+        noise = image
+        indices = list(range(self.num_timesteps))
+
+        if progress:
+            # Lazy import so that we don't depend on tqdm.
+            from tqdm.auto import tqdm
+
+            indices = tqdm(indices)
+
+        for i in indices:
+            t = th.tensor([i] * shape[0], device=device)
+            
+            print(i)
+            if i > 3:
+                break
+            
+            with th.no_grad():
+                out = self.ddim_reverse_sample(
+                    model,
+                    noise,
+                    t,
+                    clip_denoised=clip_denoised,
+                    denoised_fn=denoised_fn,
+                    model_kwargs=model_kwargs,
+                    eta=eta,
+                )
+                noise = out["sample"]
+        return noise 
+
     def ddim_sample_loop(
         self,
         model,

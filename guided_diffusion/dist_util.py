@@ -41,7 +41,6 @@ def setup_dist():
     os.environ["MASTER_PORT"] = str(port)
     dist.init_process_group(backend=backend, init_method="env://")
 
-
 def dev():
     """
     Get the device to use for torch.distributed.
